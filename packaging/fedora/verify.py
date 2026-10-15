@@ -18,4 +18,9 @@ assert 'linux: https://github.com/wzgrx/pure_live/releases/download/native-ffmpe
 assert 'Platform.isLinux ? TitleBarStyle.normal : TitleBarStyle.hidden' in (root / 'lib/core/platform/desktop_manager.dart').read_text()
 assert 'gtk_header_bar_set_decoration_layout(header_bar, ":minimize,maximize,close")' in (root / 'linux/my_application.cc').read_text()
 assert 'native_assets/linux/' in (root / 'linux/CMakeLists.txt').read_text()
-print('Fedora source, version, SDK and lockfile contract verified.')
+package = (root / 'packaging/fedora/package.py').read_text()
+assert "(bundle / 'lib/fallback/libarchive.so.13').unlink(missing_ok=True)" in package
+assert 'Requires: gtk3, libstdc++, libarchive' in package
+build = (root / 'packaging/fedora/build.sh').read_text()
+assert 'python3 tool/verify_ffmpeg_native.py linux "$bundle" --stage-linux' in build
+print('Fedora source, version, SDK, lockfile and native-library contract verified.')

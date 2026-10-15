@@ -2,8 +2,8 @@
 
 This is `xiaobaoaaaaaa/pure_live`, a Fedora packaging fork of
 [`liuchuancong/pure_live`](https://github.com/liuchuancong/pure_live).
-The maintained branch is `fedora`. Baseline: **3.1.18**; upstream **3.1.19** is
-already available and remains a separate review/update task.
+The maintained branch is `fedora`. Current source: **3.1.19**. The published
+baseline was **3.1.18-6**; see GitHub Releases for the latest validated RPM.
 
 ## Build and distribution
 
@@ -42,7 +42,10 @@ installed for older recipes; Pure Live no longer requires it for new downloads.
 
 ## Maintenance
 
-The dot's entrypoint is [DOT-HANDOFF.md](packaging/fedora/DOT-HANDOFF.md).
-No dot has been assigned merely by adding these files. The owner must send the
-handoff to their dot and connect GitHub. This setup does not create a local
-scheduled automation or require the owner's computer to remain online.
+The owner assigned ongoing cloud maintenance on **2026-10-15**, and daily
+stable-release checks are configured. The entrypoint remains
+[DOT-HANDOFF.md](packaging/fedora/DOT-HANDOFF.md). Version **3.1.19** is under
+review; the last verified published baseline is **3.1.18-6**. PRs, Actions logs
+and Releases are the shared maintenance record. No local scheduled task or
+online owner computer is required. Runtime and live playback acceptance remain
+separate from the cloud build checks.
