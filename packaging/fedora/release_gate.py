@@ -43,6 +43,15 @@ def matching_run(run, pr, workflow_id, parents=()):
     return associated and (run.get('head_sha') == head or (len(parents) == 2 and head in parents))
 
 
+def successful_build(jobs):
+    return any(
+        job.get('name') == 'build'
+        and job.get('status') == 'completed'
+        and job.get('conclusion') == 'success'
+        for job in jobs
+    )
+
+
 def main():
     repository = os.environ['GH_REPO']
     commit = os.environ['SOURCE_COMMIT']
@@ -83,6 +92,9 @@ def main():
                 ):
                     parents = tuple(item['sha'] for item in get(f'commits/{run["head_sha"]}')['parents'])
                 if matching_run(run, pr, workflow['id'], parents):
+                    jobs = get(f'actions/runs/{run["id"]}/jobs?per_page=100')['jobs']
+                    if not successful_build(jobs):
+                        continue
                     evidence = f'PR #{pr["number"]}, head {pr["head"]["sha"]}, successful run {run["html_url"]}'
                     print('Release gate approved: ' + evidence)
                     if summary := os.environ.get('GITHUB_STEP_SUMMARY'):

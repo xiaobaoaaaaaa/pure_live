@@ -38,7 +38,7 @@ jobs:
         run: python3 packaging/fedora/release_gate.py
   build:
     needs: release-gate
-    if: always() && (needs.release-gate.result == 'success' || needs.release-gate.result == 'skipped')
+    if: ${{ !cancelled() && (needs.release-gate.result == 'success' || needs.release-gate.result == 'skipped') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     container:
@@ -70,7 +70,7 @@ jobs:
           retention-days: 14
   publish:
     needs: build
-    if: github.ref == 'refs/heads/fedora' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))
+    if: ${{ !cancelled() && needs.build.result == 'success' && github.ref == 'refs/heads/fedora' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish)) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:

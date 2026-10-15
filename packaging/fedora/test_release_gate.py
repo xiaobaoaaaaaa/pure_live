@@ -2,7 +2,7 @@
 from copy import deepcopy
 import unittest
 
-from release_gate import WORKFLOW, eligible_pr, matching_run
+from release_gate import WORKFLOW, eligible_pr, matching_run, successful_build
 
 
 class ReleaseGateTests(unittest.TestCase):
@@ -18,6 +18,13 @@ class ReleaseGateTests(unittest.TestCase):
             'status': 'completed', 'conclusion': 'success', 'head_sha': 'reviewed',
             'pull_requests': [deepcopy(self.pr)],
         }
+
+    def test_build_job_itself_must_succeed(self):
+        self.assertTrue(successful_build([{'name': 'build', 'status': 'completed', 'conclusion': 'success'}]))
+        self.assertFalse(successful_build([]))
+        for conclusion in ['skipped', 'failure', 'cancelled', None]:
+            self.assertFalse(successful_build([{'name': 'build', 'status': 'completed', 'conclusion': conclusion}]))
+        self.assertFalse(successful_build([{'name': 'other', 'status': 'completed', 'conclusion': 'success'}]))
 
     def test_exact_merged_pr_and_successful_head_are_accepted(self):
         self.assertTrue(eligible_pr(self.pr, self.repository, 'merged'))
