@@ -66,3 +66,7 @@ app.*.map.json
 # FVM Version Cache
 .fvm/
 **/.make_config.yaml
+# Fedora build outputs
+.fedora-bin/
+dist/fedora/
+__pycache__/

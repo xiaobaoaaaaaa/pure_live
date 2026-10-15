@@ -1,0 +1,11 @@
+{
+  "version": "3.1.18",
+  "release": "6",
+  "upstream_repository": "liuchuancong/pure_live",
+  "upstream_tag": "v3.1.18",
+  "upstream_commit": "85c8402d34a5658a4487d1b1fe12291956531332",
+  "flutter_version": "3.47.5",
+  "flutter_revision": "6a19cca56475dbfba1478ee68d7bd0c2ef891da1",
+  "flutter_archive_sha256": "2132e990f236f8d22e7c6314b29a191a95b10d7cbcfec9b4e2e303d996652cbb",
+  "pubspec_lock_sha256": "687cd6db12de9b7947c96f32c7c185c26dc77e0c721c665a637037d976c5d6f6"
+}

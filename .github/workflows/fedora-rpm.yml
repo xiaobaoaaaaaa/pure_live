@@ -1,0 +1,81 @@
+name: Fedora RPM
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish a new immutable release after all checks pass
+        type: boolean
+        default: false
+  pull_request:
+    branches: [fedora]
+    paths: ['lib/**', 'linux/**', 'pubspec.*', '.fvmrc', 'packaging/fedora/**', '.github/workflows/fedora-rpm.yml']
+permissions:
+  contents: read
+concurrency:
+  group: fedora-rpm-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    container:
+      image: quay.io/fedora/fedora@sha256:6fb67bf40d42d33f9805620b7fc04741df3ce328a8804308dfe5d186253f3f81
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Bootstrap checkout and cache tools
+        run: dnf -y install git tar gzip zstd
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: /opt/flutter
+          key: flutter-linux-x64-3.47.5-2132e990
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: /opt/pub-cache
+          key: fedora44-pub-${{ hashFiles('pubspec.lock') }}
+      - name: Build and validate Fedora RPM
+        run: bash packaging/fedora/setup.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pure-live-fedora
+          path: dist/fedora/
+          if-no-files-found: error
+          retention-days: 14
+  publish:
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == 'refs/heads/fedora'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: pure-live-fedora
+          path: release
+      - name: Publish verified artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SOURCE_COMMIT: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd release
+          sha256sum --check SHA256SUMS
+          version=$(jq -r .version build-info.json)
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          test "$(jq -r .fork_commit build-info.json)" = "$SOURCE_COMMIT"
+          tag="v$version"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists; inspect it before taking further action."
+            exit 1
+          fi
+          printf 'Fedora 44 x86_64 RPM built from fork commit `%s`.\n\nUpstream %s; Linux window controls and verified FFmpeg runtime included.\n\nSee build-info.json, SHA256SUMS and dnf-preview.txt for build evidence. Application runtime and playback have not been tested in this cloud build.\n' "$SOURCE_COMMIT" "$version" > RELEASE-NOTES.txt
+          gh release create "$tag" --target "$SOURCE_COMMIT" --title "Pure Live $version — Fedora 44" --draft --notes-file RELEASE-NOTES.txt
+          gh release upload "$tag" ./*.rpm ./*.tar.gz SHA256SUMS build-info.json dnf-preview.txt
+          gh release edit "$tag" --draft=false --latest
