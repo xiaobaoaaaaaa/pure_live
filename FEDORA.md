@@ -18,11 +18,17 @@ gh workflow run fedora-rpm.yml --repo xiaobaoaaaaaa/pure_live --ref fedora -f pu
 gh workflow run fedora-rpm.yml --repo xiaobaoaaaaaa/pure_live --ref fedora -f publish=true
 ```
 
-A PR that changes `packaging/fedora/release.json` schedules a fresh build and
-publication when merged into `fedora`. A read-only gate first verifies that the
+A PR that changes `packaging/fedora/release.json`, the release gate, or the
+Fedora workflow schedules a fresh build and publication when merged into
+`fedora`. Gate/workflow repair PRs can retry an unpublished release without
+dummy version changes; an existing release still stops publication unchanged.
+A read-only gate first verifies that the
 push commit is the PR's merge commit and that the exact PR head passed the
 `Fedora RPM` pull-request workflow. Direct pushes and stale/failed checks do not
-qualify. The manual commands above remain available. This new publication path
+qualify. GitHub may clear the run's PR association after merge; in that case the
+gate additionally requires an exact PR-head SHA, branch and source-repository
+identity match. The manual commands above remain available. This new publication
+path
 must be verified by its first successful run before it is treated as operational.
 
 A successful build produces the RPM, matching source tarball, `build-info.json`,

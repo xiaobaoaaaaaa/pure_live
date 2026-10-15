@@ -8,7 +8,7 @@ on:
         default: false
   push:
     branches: [fedora]
-    paths: ['packaging/fedora/release.json']
+    paths: ['packaging/fedora/release.json', 'packaging/fedora/release_gate.py', '.github/workflows/fedora-rpm.yml']
   pull_request:
     branches: [fedora]
     paths: ['lib/**', 'linux/**', 'pubspec.*', '.fvmrc', 'test/**', 'tool/verify_ffmpeg_native.py', 'packaging/fedora/**', '.github/workflows/fedora-rpm.yml']
