@@ -6,16 +6,39 @@ on:
         description: Publish a new immutable release after all checks pass
         type: boolean
         default: false
+  push:
+    branches: [fedora]
+    paths: ['packaging/fedora/release.json']
   pull_request:
     branches: [fedora]
-    paths: ['lib/**', 'linux/**', 'pubspec.*', '.fvmrc', 'packaging/fedora/**', '.github/workflows/fedora-rpm.yml']
+    paths: ['lib/**', 'linux/**', 'pubspec.*', '.fvmrc', 'test/**', 'tool/verify_ffmpeg_native.py', 'packaging/fedora/**', '.github/workflows/fedora-rpm.yml']
 permissions:
   contents: read
 concurrency:
   group: fedora-rpm-${{ github.ref }}
   cancel-in-progress: false
 jobs:
+  release-gate:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+      actions: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Require a merged PR with successful checks for its exact head
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SOURCE_COMMIT: ${{ github.sha }}
+        run: python3 packaging/fedora/release_gate.py
   build:
+    needs: release-gate
+    if: always() && (needs.release-gate.result == 'success' || needs.release-gate.result == 'skipped')
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     container:
@@ -47,7 +70,7 @@ jobs:
           retention-days: 14
   publish:
     needs: build
-    if: github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == 'refs/heads/fedora'
+    if: github.ref == 'refs/heads/fedora' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:

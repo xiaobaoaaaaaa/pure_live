@@ -18,6 +18,13 @@ gh workflow run fedora-rpm.yml --repo xiaobaoaaaaaa/pure_live --ref fedora -f pu
 gh workflow run fedora-rpm.yml --repo xiaobaoaaaaaa/pure_live --ref fedora -f publish=true
 ```
 
+A PR that changes `packaging/fedora/release.json` schedules a fresh build and
+publication when merged into `fedora`. A read-only gate first verifies that the
+push commit is the PR's merge commit and that the exact PR head passed the
+`Fedora RPM` pull-request workflow. Direct pushes and stale/failed checks do not
+qualify. The manual commands above remain available. This new publication path
+must be verified by its first successful run before it is treated as operational.
+
 A successful build produces the RPM, matching source tarball, `build-info.json`,
 `SHA256SUMS` and a DNF dependency preview. Publication runs separately, after all
 checks, with write access only in the publishing job. Failed builds retain the
