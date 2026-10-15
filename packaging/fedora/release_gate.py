@@ -32,11 +32,29 @@ def matching_run(run, pr, workflow_id, parents=()):
     ):
         return False
     head = pr['head']['sha']
+    associations = run.get('pull_requests')
+    if associations == []:
+        # GitHub clears this collection after a PR is merged. The run still
+        # identifies its exact source commit, branch and repository. Accept
+        # that immutable commit evidence only for the exact PR head, never a
+        # guessed/synthetic SHA or an unknown/different source repository.
+        source = pr.get('head', {})
+        expected_repo = source.get('repo') or {}
+        actual_repo = run.get('head_repository') or {}
+        return (
+            run.get('head_sha') == head
+            and bool(source.get('ref'))
+            and run.get('head_branch') == source['ref']
+            and expected_repo.get('id') is not None
+            and actual_repo.get('id') == expected_repo['id']
+            and bool(expected_repo.get('full_name'))
+            and actual_repo.get('full_name') == expected_repo['full_name']
+        )
     associated = any(
         item.get('number') == pr['number']
         and item.get('head', {}).get('sha') == head
         and item.get('base', {}).get('ref') == 'fedora'
-        for item in run.get('pull_requests', [])
+        for item in (associations or [])
     )
     # Some GitHub run responses identify the synthetic PR merge commit. Accept
     # it only with both the exact associated PR head and its Git parent link.

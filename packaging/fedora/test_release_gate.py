@@ -10,14 +10,55 @@ class ReleaseGateTests(unittest.TestCase):
         self.repository = 'owner/pure_live'
         self.pr = {
             'number': 7, 'merged_at': '2026-10-15T00:00:00Z',
-            'merge_commit_sha': 'merged', 'head': {'sha': 'reviewed'},
+            'merge_commit_sha': 'merged',
+            'head': {'sha': 'reviewed', 'ref': 'update/fedora-version',
+                     'repo': {'id': 42, 'full_name': self.repository}},
             'base': {'ref': 'fedora', 'repo': {'full_name': self.repository}},
         }
         self.run = {
             'workflow_id': 10, 'path': WORKFLOW, 'event': 'pull_request',
             'status': 'completed', 'conclusion': 'success', 'head_sha': 'reviewed',
+            'head_branch': 'update/fedora-version',
+            'head_repository': {'id': 42, 'full_name': self.repository},
             'pull_requests': [deepcopy(self.pr)],
         }
+
+    def test_merged_pr_empty_association_accepts_exact_source_identity(self):
+        self.run['pull_requests'] = []
+        self.assertTrue(matching_run(self.run, self.pr, 10))
+
+    def test_empty_association_rejects_stale_or_synthetic_head(self):
+        self.run['pull_requests'] = []
+        for sha in ['stale', 'synthetic', None]:
+            self.run['head_sha'] = sha
+            self.assertFalse(matching_run(self.run, self.pr, 10, ('base', 'reviewed')))
+
+    def test_empty_association_rejects_wrong_or_missing_branch(self):
+        self.run['pull_requests'] = []
+        for branch in ['different-branch', '', None]:
+            self.run['head_branch'] = branch
+            self.assertFalse(matching_run(self.run, self.pr, 10))
+        self.run['head_branch'] = 'update/fedora-version'
+        del self.pr['head']['ref']
+        self.assertFalse(matching_run(self.run, self.pr, 10))
+
+    def test_empty_association_rejects_wrong_or_missing_repository(self):
+        self.run['pull_requests'] = []
+        for repository in [None, {}, {'id': 43, 'full_name': self.repository},
+                           {'id': 42, 'full_name': 'other/pure_live'},
+                           {'id': 42}, {'full_name': self.repository}]:
+            self.run['head_repository'] = repository
+            self.assertFalse(matching_run(self.run, self.pr, 10))
+        self.run['head_repository'] = {'id': 42, 'full_name': self.repository}
+        self.pr['head']['repo'] = None
+        self.assertFalse(matching_run(self.run, self.pr, 10))
+
+    def test_empty_association_still_rejects_wrong_workflow_event_or_result(self):
+        self.run['pull_requests'] = []
+        for field, value in [('event', 'push'), ('workflow_id', 99), ('conclusion', 'failure')]:
+            run = deepcopy(self.run)
+            run[field] = value
+            self.assertFalse(matching_run(run, self.pr, 10))
 
     def test_build_job_itself_must_succeed(self):
         self.assertTrue(successful_build([{'name': 'build', 'status': 'completed', 'conclusion': 'success'}]))
@@ -71,7 +112,7 @@ class ReleaseGateTests(unittest.TestCase):
     def test_different_or_missing_pr_association_is_rejected(self):
         self.run['pull_requests'][0]['number'] = 8
         self.assertFalse(matching_run(self.run, self.pr, 10))
-        self.run['pull_requests'] = []
+        del self.run['pull_requests']
         self.assertFalse(matching_run(self.run, self.pr, 10))
 
 
