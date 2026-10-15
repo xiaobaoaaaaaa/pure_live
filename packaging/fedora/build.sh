@@ -2,6 +2,7 @@
 set -euo pipefail
 export PATH="$FLUTTER_ROOT/bin:$PATH"
 python3 packaging/fedora/verify.py
+python3 -m unittest discover -s packaging/fedora -p 'test_*.py' -v
 actual_revision=$(git -C "$FLUTTER_ROOT" rev-parse HEAD)
 expected_revision=$(python3 -c 'import json;print(json.load(open("packaging/fedora/release.json"))["flutter_revision"])')
 test "$actual_revision" = "$expected_revision"
@@ -15,6 +16,9 @@ export CMAKE_BUILD_PARALLEL_LEVEL=2
 flutter pub get --enforce-lockfile
 python3 packaging/fedora/verify.py
 dart run enven --env-files .env,.env.prod --class-name AppConfig
+# Offline regression coverage; live network probes remain opt-in.
+flutter test --no-pub test/core/player test/domains/live \
+  test/shared/platforms/huya_headline_panel_test.dart
 flutter build linux --release --no-pub --build-name="$version" --dart-define=PURELIVE_BUILD_SOURCE=fedora-fork
 bundle=build/linux/x64/release/bundle
 python3 tool/verify_ffmpeg_native.py linux "$bundle" --stage-linux

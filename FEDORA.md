@@ -2,8 +2,8 @@
 
 This is `xiaobaoaaaaaa/pure_live`, a Fedora packaging fork of
 [`liuchuancong/pure_live`](https://github.com/liuchuancong/pure_live).
-The maintained branch is `fedora`. Baseline: **3.1.18**; upstream **3.1.19** is
-already available and remains a separate review/update task.
+The maintained branch is `fedora`. Current source: **3.1.19**. The published
+baseline was **3.1.18-6**; see GitHub Releases for the latest validated RPM.
 
 ## Build and distribution
 
@@ -17,6 +17,13 @@ gh workflow run fedora-rpm.yml --repo xiaobaoaaaaaa/pure_live --ref fedora -f pu
 # After a reviewed change is ready for release:
 gh workflow run fedora-rpm.yml --repo xiaobaoaaaaaa/pure_live --ref fedora -f publish=true
 ```
+
+A PR that changes `packaging/fedora/release.json` schedules a fresh build and
+publication when merged into `fedora`. A read-only gate first verifies that the
+push commit is the PR's merge commit and that the exact PR head passed the
+`Fedora RPM` pull-request workflow. Direct pushes and stale/failed checks do not
+qualify. The manual commands above remain available. This new publication path
+must be verified by its first successful run before it is treated as operational.
 
 A successful build produces the RPM, matching source tarball, `build-info.json`,
 `SHA256SUMS` and a DNF dependency preview. Publication runs separately, after all
@@ -42,7 +49,10 @@ installed for older recipes; Pure Live no longer requires it for new downloads.
 
 ## Maintenance
 
-The dot's entrypoint is [DOT-HANDOFF.md](packaging/fedora/DOT-HANDOFF.md).
-No dot has been assigned merely by adding these files. The owner must send the
-handoff to their dot and connect GitHub. This setup does not create a local
-scheduled automation or require the owner's computer to remain online.
+The owner assigned ongoing cloud maintenance on **2026-10-15**, and daily
+stable-release checks are configured. The entrypoint remains
+[DOT-HANDOFF.md](packaging/fedora/DOT-HANDOFF.md). Version **3.1.19** is under
+review; the last verified published baseline is **3.1.18-6**. PRs, Actions logs
+and Releases are the shared maintenance record. No local scheduled task or
+online owner computer is required. Runtime and live playback acceptance remain
+separate from the cloud build checks.

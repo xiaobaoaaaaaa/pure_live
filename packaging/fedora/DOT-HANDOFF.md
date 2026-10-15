@@ -42,7 +42,9 @@ shared state with local Codex; no direct Codex-to-dot API is required.
 - Run `python3 packaging/fedora/verify.py`, affected tests, `git diff --check`,
   and the Fedora CI build. Submit a PR containing changes and evidence. Merge
   only after checks and the applicable owner authorization permit it.
-- Dispatch publication from `fedora` with `publish=true`. Check the release tag
+- A reviewed release.json change merged into `fedora` triggers the gated cloud
+  build/publication path. Manual dispatch with `publish=true` remains available.
+  Check the release tag
   points at the built fork commit, digests match, and the RPM version/architecture
   are correct. Preserve old releases and the last working download on failure.
 - Published releases are immutable. Same-upstream-version rebuilds need an
